@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'quiz_brain.dart';
+import 'package:rflutter_alert/rflutter_alert.dart';
+
+
+QuizBrain quizBrain = QuizBrain();
 
 void main() => runApp(Quizzler());
 
@@ -25,6 +30,27 @@ class QuizPage extends StatefulWidget {
 }
 
 class _QuizPageState extends State<QuizPage> {
+  List<Icon> scoreKeeper = [];
+
+  void checkAnswer(bool userPicked) {
+    bool correctAnswer = quizBrain.getAnswer();
+    if (correctAnswer == userPicked) {
+      print("User got answer right");
+      setState(() {
+        scoreKeeper.add(Icon(Icons.check, color: Colors.green.shade800,));
+      });
+    } else {
+      print("User got it wrong");
+      setState(() {
+        scoreKeeper.add(Icon(Icons.close, color: Colors.red.shade400,));
+      });
+    }
+
+    setState(() {
+      quizBrain.nextQuestion();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -37,7 +63,7 @@ class _QuizPageState extends State<QuizPage> {
             padding: EdgeInsets.all(10.0),
             child: Center(
               child: Text(
-                'This is where the question text will go.',
+                quizBrain.getQuestion(),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 25.0,
@@ -62,6 +88,13 @@ class _QuizPageState extends State<QuizPage> {
               ),
               onPressed: () {
                 //The user picked true.
+                checkAnswer(true);
+                if (quizBrain.checkQuestionsExhausted()) {
+
+                  showDialog(context);
+                } else {
+
+                }
               },
             ),
           ),
@@ -80,13 +113,37 @@ class _QuizPageState extends State<QuizPage> {
               ),
               onPressed: () {
                 //The user picked false.
+                checkAnswer(false);
+                if (quizBrain.checkQuestionsExhausted()) {
+                  showDialog(context);
+                }
               },
             ),
           ),
         ),
-        //TODO: Add a Row here as your score keeper
+        Row(
+          children: scoreKeeper,
+        )
       ],
     );
+  }
+
+  void showDialog(BuildContext context) {
+    Alert(context: context,
+        title: "Questions Exhausted",
+        desc: "The questions in the question bank have exhausted",
+        buttons: [
+          DialogButton(
+            onPressed: (){
+              setState(() {
+                quizBrain.resetQuestions();
+                scoreKeeper.clear();
+              });
+              Navigator.pop(context);
+            },
+            child: Text("OK"),
+          )
+        ]).show();
   }
 }
 
